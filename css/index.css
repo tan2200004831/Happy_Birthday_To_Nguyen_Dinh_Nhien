@@ -1,0 +1,180 @@
+body {
+  background-color: #faa4ca;
+  display: flex;
+  justify-content: center; /* giữa theo chiều ngang */
+  align-items: center; /* giữa theo chiều dọc */
+  height: 100vh;
+  margin: 0;
+}
+
+.frame {
+  background: rgb(235, 174, 235);
+  padding: 20px;
+  border-radius: 15px;
+  width: 700px;
+  height: 490px;
+  display: flex;
+  justify-content: space-between;
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+  gap: 5%;
+}
+
+.password-box {
+  width: 80%;
+  padding: 5px;
+  font-size: 16px;
+  text-align: center;
+  border: 2px solid rgb(174, 0, 104);
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.keypad button {
+  padding: 12px;
+  font-size: 18px;
+  border-radius: 10px;
+  border: none;
+  background: rgb(239, 135, 196);
+  cursor: pointer;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.keypad button:hover {
+  background: hotpink;
+  color: white;
+}
+
+.first_img {
+  width: 40%;
+  height: 40%;
+  border-radius: 15px;
+}
+
+.title {
+  color: rgb(174, 0, 104);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* 
+====================================================================================
+Link css vào js
+*/
+
+.floating-icon {
+  position: fixed;
+  bottom: -10px;
+  font-size: 25px;
+  animation: flyUp linear infinite;
+  pointer-events: none;
+}
+
+@keyframes flyUp {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-120vh) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* 
+====================================================================================
+Hiệu ứng thông báo khi nhập sai
+*/
+.password-box.wrong {
+  animation: shake 0.6s;
+  border: 2px solid #ff4d4f;
+  background: #fff0f0;
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/*
+================================================================================= 
+Thông báo khi nhập sai
+*/
+#notify {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  background: white;
+  border-radius: 10px;
+  font-size: 18px;
+  display: none;
+  animation: fadeOut 1s forwards 3s;
+}
+
+/* Tự mờ dần sau 3s */
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+/*
+================================================================================= 
+Gấu bắn trái tim
+*/
+.love {
+  width: 50%;
+  height: 400px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Con gấu */
+.bear {
+  width: 100px;
+  position: absolute;
+  bottom: 110px;
+  left: 10px;
+  border-radius: 15px;
+}
+
+/* Các trái tim nhỏ */
+.small-heart {
+  width: 25px;
+  height: 25px;
+  position: absolute;
+  background-image: url("/Happy_Birthday/images/download.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: 1s;
+}
+
+.right-box {
+  width: 100%;
+}
+
+.left-box {
+  position: relative; /* quan trọng để tim nằm trong nó */
+  width: 160%;
+  overflow: hidden;
+}
