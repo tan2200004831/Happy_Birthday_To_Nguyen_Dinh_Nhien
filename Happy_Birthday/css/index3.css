@@ -1,0 +1,543 @@
+:root {
+  --card-w: 800px;
+  --card-h: 1100px;
+  --bg-pink: #ffd9e6;
+  --paper: #efe6dd;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #fff0f6 0%, #ffd6e8 100%);
+  overflow: hidden;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #f3eae6 0%, #efe6dd 100%);
+}
+
+/* Card wrapper to simulate a poster lying on a background */
+.card-frame {
+  width: calc(var(--card-w) + 50px);
+  height: calc(var(--card-h) + 50px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #d9d2c8;
+  padding: 30px;
+  box-sizing: border-box;
+  transform: scale(0.52); /* 60% kích thước */
+  transform-origin: center;
+  border-radius: 15px;
+  perspective: 1200px;
+}
+
+.card {
+  width: var(--card-w);
+  height: var(--card-h);
+  background: var(--bg-pink);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  position: relative;
+  cursor: pointer;
+}
+/* Back of the card (inside) */
+.card-back {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 5%;
+  left: 0;
+  background: var(--bg-inside);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px;
+  box-sizing: border-box;
+  /* thêm khoảng đệm đáy để nút không dính sát viền */
+  padding-bottom: 40px;
+}
+
+.card-back p.typewriter {
+  display: block;
+  margin: 0 auto; /* căn giữa */
+  padding: 0 40px; /* thụt vào 40px mỗi bên */
+  text-align: justify; /* căn đều 2 bên (cho đẹp hơn) */
+  max-width: 85%; /* hoặc tùy ý, ví dụ 600px */
+  margin-top: 5%;
+}
+
+/* Front page that will flip */
+.card-page {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--bg-pink);
+  border-radius: 10px;
+  backface-visibility: hidden;
+  transform-origin: left; /* lật từ cạnh trái */
+  transition: transform 3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  box-shadow: inset -5px 0 15px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Flip the page on click */
+.card.open .card-page {
+  transform: rotateY(-180deg);
+}
+
+/* subtle beige paper background edge like image */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -30px;
+  border-radius: 14px;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.02) inset;
+  pointer-events: none;
+}
+
+/* Confetti (simple shapes using multiple pseudo elements or SVG background) */
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+      circle at 15% 18%,
+      rgba(255, 255, 255, 0.06) 6px,
+      transparent 7px
+    ),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  /* We'll also overlay small decorative SVG repeated using data URI */
+  background-repeat: no-repeat;
+}
+
+/* central cake panel */
+.cake-plate {
+  width: 85%;
+  max-width: 700px;
+  height: 460px;
+  margin: 100px auto 0;
+  background: linear-gradient(180deg, #fff7f0, #fffefc);
+  border-radius: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 6px solid rgba(255, 255, 255, 0.35);
+}
+
+/* small ribbon / tagline */
+.tagline {
+  position: absolute;
+  top: 18px;
+  right: 30px;
+  font-family: "Great Vibes", cursive;
+  color: #66a37a;
+  font-size: 22px;
+  transform: rotate(-6deg);
+  opacity: 0.95;
+}
+
+/* big headline */
+.headline {
+  font-family: "Pacifico", cursive;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-align: center;
+  color: #e35f91;
+  font-size: 56px;
+  line-height: 0.95;
+  margin: 18px 10px 6px;
+}
+
+.sub {
+  color: #f1b2c9;
+  font-size: 34px;
+  margin-top: 10px;
+  font-weight: 700;
+}
+
+/* cake decorations below headline: candles + shapes */
+.cake-decor {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 12px;
+  align-items: flex-end;
+}
+
+.candle {
+  width: 12px;
+  height: 60px;
+  background: linear-gradient(180deg, #ffefe8, #ffd9d0);
+  border-radius: 6px;
+  position: relative;
+  box-shadow: inset 0 -6px 10px rgba(0, 0, 0, 0.06);
+}
+.candle::after {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 40% 30%,
+    #fff6c9 0%,
+    #ffef5e 30%,
+    #ff7a3d 70%
+  );
+  filter: drop-shadow(0 3px 6px rgba(255, 120, 60, 0.18));
+}
+
+/* little decorative cake slice shapes under the plate to mimic small cakes */
+.bottom-decor {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-end;
+}
+.mini {
+  width: 80px;
+  height: 40px;
+  background: linear-gradient(180deg, #ffd8e6, #ffbcd6);
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+  transform: rotate(-6deg);
+}
+
+/* bouquet image overlay (top-left) */
+.flower {
+  position: absolute;
+  left: -30px;
+  top: -30px;
+  width: 240px;
+  transform: rotate(-18deg);
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* confetti SVG scattered with pseudo elements for variety */
+.confetti svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+/* small star/shape accents (absolute positioned decorative elements) */
+.card {
+  position: relative; /* quan trọng */
+}
+
+.decor-shape {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  opacity: 0.95;
+}
+
+/* các shape đã có */
+.s1 {
+  left: 12%;
+  top: 22%;
+  transform: rotate(12deg);
+}
+.s2 {
+  right: 10%;
+  top: 30%;
+  transform: rotate(-8deg);
+}
+.s3 {
+  left: 8%;
+  bottom: 12%;
+  transform: rotate(-10deg);
+}
+.s4 {
+  right: 16%;
+  bottom: 22%;
+  transform: rotate(6deg);
+}
+
+/* Sửa s5: đặt rõ right + bottom (không dùng chỉ bottom:50%) */
+.s5 {
+  right: 0%; /* cách phải 12% của khung .card */
+  bottom: 0%; /* cách dưới 20% của khung .card */
+  width: 150px; /* kích thước rõ ràng */
+  height: auto;
+  transform: rotate(-6deg);
+  z-index: 6;
+}
+
+/* đảm bảo ảnh trong s5 co gọn vừa khung */
+.decor-shape.s5 img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.s6 {
+  right: 0%; /* cách phải 12% của khung .card */
+  left: 85%;
+  bottom: 0%; /* cách dưới 20% của khung .card */
+  top: -4.5%;
+  width: 115px; /* kích thước rõ ràng */
+  height: auto;
+  transform: rotate(-6deg);
+  z-index: 6;
+}
+
+/* đảm bảo ảnh trong s6 co gọn vừa khung */
+.decor-shape.s6 img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.s7 {
+  right: 0%; /* cách phải 12% của khung .card */
+  left: 8%;
+  bottom: 0%; /* cách dưới 20% của khung .card */
+  top: 65%;
+  width: 115px; /* kích thước rõ ràng */
+  height: auto;
+  transform: rotate(4deg);
+  z-index: 6;
+}
+
+/* đảm bảo ảnh trong s7 co gọn vừa khung */
+.decor-shape.s7 img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.s71 {
+  right: 0%; /* cách phải 12% của khung .card */
+  left: 75%;
+  bottom: 0%; /* cách dưới 20% của khung .card */
+  top: 65%;
+  width: 115px; /* kích thước rõ ràng */
+  height: auto;
+  /* transform: rotate(-6deg); */
+  /* Lật ngang */
+  transform: scaleX(-1);
+
+  /* Lật dọc */
+  /* transform: scaleY(-1); */
+
+  z-index: 6;
+}
+
+/* đảm bảo ảnh trong s71 co gọn vừa khung */
+.decor-shape.s71 img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.s8 {
+  right: 0%; /* cách phải 12% của khung .card */
+  left: 10%;
+  bottom: 0%; /* cách dưới 20% của khung .card */
+  top: -1%;
+  width: 115px; /* kích thước rõ ràng */
+  height: auto;
+  transform: rotate(-6deg);
+  z-index: 6;
+}
+
+/* đảm bảo ảnh trong s8 co gọn vừa khung */
+.decor-shape.s8 img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.s9 {
+  right: 10%; /* cách phải 12% của khung .card */
+  left: 5%;
+  bottom: 0%; /* cách dưới 20% của khung .card */
+  top: 87%;
+  width: 115px; /* kích thước rõ ràng */
+  height: auto;
+  transform: rotate(0deg);
+  z-index: 6;
+}
+
+/* đảm bảo ảnh trong s9 co gọn vừa khung */
+.decor-shape.s9 img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.s10 {
+  right: 60%; /* cách phải 12% của khung .card */
+  left: 45%;
+  top: 78%;
+  width: 115px; /* kích thước rõ ràng */
+  height: auto;
+  transform: rotate(0deg);
+  z-index: 6;
+}
+
+/* đảm bảo ảnh trong s9 co gọn vừa khung */
+.decor-shape.s10 img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.s11 {
+  right: 55%; /* cách phải 12% của khung .card */
+  left: 37%;
+  top: 55%;
+  width: 190px; /* kích thước rõ ràng */
+  height: auto;
+  transform: rotate(0deg);
+  z-index: 6;
+}
+/* đảm bảo ảnh trong s11 co gọn vừa khung */
+.decor-shape.s11 img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 15px;
+}
+
+/* đảm bảo ảnh trong s9 co gọn vừa khung */
+.decor-shape.s10 img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* text small green */
+.green-small {
+  font-family: "Great Vibes", cursive;
+  font-size: 22px;
+  color: #6aa46a;
+  margin-top: 6px;
+}
+
+/* responsive */
+@media (max-width: 900px) {
+  :root {
+    --card-w: 640px;
+    --card-h: 900px;
+  }
+  .flower {
+    width: 200px;
+    left: -20px;
+    top: -20px;
+  }
+  .headline {
+    font-size: 44px;
+  }
+}
+@media (max-width: 520px) {
+  :root {
+    --card-w: 360px;
+    --card-h: 620px;
+  }
+  .flower {
+    display: none;
+  } /* hide flower on small screens */
+  .headline {
+    font-size: 28px;
+  }
+  .cake-plate {
+    height: 320px;
+    margin-top: 70px;
+  }
+}
+
+/* phần tử cha - cho phép layout block/width, KHÔNG đặt border-right lên đây */
+.typewriter {
+  display: block; /* h1/p là block, an toàn */
+  max-width: 100%; /* hoặc set một giá trị cố định như 700px/80% */
+  margin: 0 0 8px 0;
+  font-family: Pacifico, Roboto, "Noto Sans", Arial, sans-serif;
+  line-height: 1.3;
+  /* loại bỏ border-right và animation cũ ở đây */
+  white-space: normal; /* cho phép xuống dòng bình thường */
+  overflow-wrap: break-word; /* ngắt từ khi cần để tránh tràn */
+  word-break: break-word; /* fallback */
+}
+
+/* span chứa văn bản phải là inline để caret luôn nằm sau ký tự cuối */
+.typewriter .tw-text {
+  display: inline; /* quan trọng: inline để caret đứng sát chữ cuối */
+  white-space: pre-wrap; /* giữ khoảng trắng, cho phép xuống dòng */
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* caret đặt trên span thông qua pseudo-element */
+.typewriter .tw-text.caret::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: black;
+  margin-left: 4px;
+  vertical-align: bottom;
+  animation: tw-blink 1s steps(1) infinite;
+}
+
+@keyframes tw-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.special-btn {
+  background: linear-gradient(145deg, #fff0f5, #ffb6c1);
+  border: none;
+  margin-top: auto; /* <-- đẩy nút xuống đáy khung .card-back */
+  margin-bottom: 10%;
+  border-radius: 25px;
+  padding: 10px 35px; /* cao rộng nút đẹp hơn */
+  font-size: 30px;
+  cursor: pointer;
+  min-width: 160px; /* đảm bảo không quá nhỏ */
+  align-self: center; /* căn giữa ngang (nếu cần) */
+  font-family: "Comic Sans MS", cursive, sans-serif;
+  color: #333;
+  box-shadow: 0 5px 0 #d46a85;
+  transition: all 0.2s ease;
+}
+
+.special-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 0 #d46a85;
+}
+
+.special-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #d46a85;
+}

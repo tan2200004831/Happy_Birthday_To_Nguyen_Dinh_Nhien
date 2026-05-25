@@ -531,57 +531,6 @@ window.addEventListener("load", () => {
     passive: true,
   });
   window.addEventListener("keydown", resumePlay, { once: true, passive: true });
-
-  // manual play UI (if needed)
-  function showManualPlay() {
-    if (document.getElementById("bgPlayOverlay")) return; // already shown
-    const overlay = document.createElement("div");
-    overlay.id = "bgPlayOverlay";
-    Object.assign(overlay.style, {
-      position: "fixed",
-      inset: 0,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "rgba(0,0,0,0.32)",
-      zIndex: 999999,
-    });
-    const btn = document.createElement("button");
-    btn.textContent = "Chạm để bật nhạc";
-    Object.assign(btn.style, {
-      padding: "12px 18px",
-      fontSize: "16px",
-      borderRadius: "8px",
-      border: "none",
-      background: "#ff6fae",
-      color: "#fff",
-      cursor: "pointer",
-      boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-    });
-    btn.addEventListener(
-      "click",
-      async () => {
-        try {
-          bg.muted = false;
-          bg.volume = Math.max(0.05, bg.volume || 0.45);
-          await bg.play();
-          console.log("bgm: started after manual button click");
-          overlay.remove();
-        } catch (err) {
-          console.warn("bgm: still failed after manual click:", err);
-        }
-      },
-      { once: true }
-    );
-    overlay.appendChild(btn);
-    document.body.appendChild(overlay);
-  }
-
-  function cleanup() {
-    // remove any leftover overlay if present
-    const ol = document.getElementById("bgPlayOverlay");
-    if (ol) ol.remove();
-  }
 })();
 
 // Thời gian của nhạc
