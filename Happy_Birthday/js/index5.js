@@ -907,7 +907,17 @@ const IMAGES = [
   "./Happy_Birthday/images/29.jpg",
   "./Happy_Birthday/images/30.jpg",
   "./Happy_Birthday/images/31.jpg",
-  "./Happy_Birthday/images/32.jpg"
+  "./Happy_Birthday/images/33.jpg",
+  "./Happy_Birthday/images/34.jpg",
+  "./Happy_Birthday/images/35.jpg",
+  "./Happy_Birthday/images/36.jpg",
+  "./Happy_Birthday/images/37.jpg",
+  "./Happy_Birthday/images/38.jpg",
+  "./Happy_Birthday/images/39.jpg",
+  "./Happy_Birthday/images/40.jpg",
+  "./Happy_Birthday/images/41.jpg",
+  "./Happy_Birthday/images/42.jpg",
+  "./Happy_Birthday/images/43.jpg"
 ];
 
 // === HÀM VẼ THẺ BÀI ẢNH (BẢN ĐẸP 512x512 SIÊU SẮC NÉT & TỐI ƯU HÓA BỘ NHỚ) ===
@@ -1300,6 +1310,253 @@ function init3DScene() {
   let introStartTime = null;
   const camIntroDuration = 2500; // Intro camera kéo dài 2.5s
 
+  // === ĐIỀU KHIỂN BẰNG TAY QUA CAMERA (HAND TRACKING) ===
+  let handTrackingActive = false;
+  let handCameraInstance = null;
+  let handsInstance = null;
+  let currentHandX = 0.5;
+  let currentHandY = 0.5;
+  let smoothHandX = 0.5;
+  let smoothHandY = 0.5;
+  let handDetected = false;
+  let isZoomingIn = false;
+  let isZoomingOut = false;
+  let handBaseAzimuth = 0;
+  let handBasePolar = Math.PI / 2;
+  let handBaseRadius = 4.8;
+
+  const HAND_CONNECTIONS = [
+    [0,1],[1,2],[2,3],[3,4],
+    [0,5],[5,6],[6,7],[7,8],
+    [5,9],[9,10],[10,11],[11,12],
+    [9,13],[13,14],[14,15],[15,16],
+    [13,17],[17,18],[18,19],[19,20],
+    [0,17]
+  ];
+
+  function detectFistScore(landmarks) {
+    const fingers = [
+      { tip: 8, pip: 6 },
+      { tip: 12, pip: 10 },
+      { tip: 16, pip: 14 },
+      { tip: 20, pip: 18 },
+    ];
+    let curledCount = 0;
+    for (const f of fingers) {
+      if (landmarks[f.tip].y > landmarks[f.pip].y) curledCount++;
+    }
+    const thumbTip = landmarks[4];
+    const indexMcp = landmarks[5];
+    const thumbDist = Math.hypot(thumbTip.x - indexMcp.x, thumbTip.y - indexMcp.y);
+    if (thumbDist < 0.1) curledCount++;
+    return curledCount / 5;
+  }
+
+  function drawHandOnCanvas(ctx, landmarks, w, h) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0, 255, 136, 0.6)';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    for (const [i, j] of HAND_CONNECTIONS) {
+      ctx.beginPath();
+      ctx.moveTo(landmarks[i].x * w, landmarks[i].y * h);
+      ctx.lineTo(landmarks[j].x * w, landmarks[j].y * h);
+      ctx.stroke();
+    }
+    for (let i = 0; i < landmarks.length; i++) {
+      const lm = landmarks[i];
+      ctx.beginPath();
+      ctx.arc(lm.x * w, lm.y * h, i === 9 ? 6 : 3.5, 0, Math.PI * 2);
+      if (i === 9) {
+        ctx.fillStyle = '#ff4466';
+        ctx.shadowColor = '#ff4466';
+        ctx.shadowBlur = 10;
+      } else {
+        ctx.fillStyle = '#00ff88';
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+      }
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function showHandStatus(text) {
+    const el = document.getElementById('hand-status');
+    if (el) { el.textContent = text; el.classList.add('visible'); }
+  }
+  function hideHandStatus() {
+    const el = document.getElementById('hand-status');
+    if (el) el.classList.remove('visible');
+  }
+
+  async function startHandTracking() {
+    const toggleBtn = document.getElementById('hand-toggle');
+    const previewContainer = document.getElementById('hand-preview');
+    const previewCanvas = document.getElementById('hand-canvas');
+    const previewCtx = previewCanvas.getContext('2d');
+    const videoElement = document.getElementById('hand-video');
+
+    if (!window.Hands || !window.Camera) {
+      alert('Thư viện MediaPipe chưa được tải. Hãy kiểm tra kết nối mạng.');
+      return;
+    }
+
+    toggleBtn.classList.add('loading');
+    toggleBtn.querySelector('.hand-label').textContent = 'Đang tải...';
+    toggleBtn.querySelector('.hand-icon').textContent = '⏳';
+    previewContainer.classList.add('active');
+    showHandStatus('Đang tải mô hình AI...');
+
+    try {
+      // Tạo Hands instance (tái sử dụng nếu đã có)
+      if (!handsInstance) {
+        const hands = new window.Hands({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`
+        });
+        hands.setOptions({
+          maxNumHands: 1,
+          modelComplexity: 1,
+          minDetectionConfidence: 0.7,
+          minTrackingConfidence: 0.5
+        });
+        hands.onResults((results) => {
+          previewCtx.save();
+          previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+          // Vẽ ảnh camera (lật gương - selfie mode)
+          previewCtx.translate(previewCanvas.width, 0);
+          previewCtx.scale(-1, 1);
+          previewCtx.drawImage(results.image, 0, 0, previewCanvas.width, previewCanvas.height);
+          previewCtx.restore();
+
+          if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            const landmarks = results.multiHandLandmarks[0];
+            handDetected = true;
+            hideHandStatus();
+
+            // Vẽ landmarks (lật gương)
+            previewCtx.save();
+            previewCtx.translate(previewCanvas.width, 0);
+            previewCtx.scale(-1, 1);
+            drawHandOnCanvas(previewCtx, landmarks, previewCanvas.width, previewCanvas.height);
+            previewCtx.restore();
+
+            // Vị trí trung tâm bàn tay (landmark 9 = gốc ngón giữa)
+            const handCenter = landmarks[9];
+            currentHandX = 1 - handCenter.x; // lật X cho tự nhiên
+            currentHandY = handCenter.y;
+
+            // Phát hiện cử chỉ nắm/mở tay
+            const fistScore = detectFistScore(landmarks);
+            isZoomingIn = fistScore > 0.75;
+            isZoomingOut = fistScore < 0.2;
+
+            // Hiển thị trạng thái zoom trên canvas
+            if (isZoomingIn || isZoomingOut) {
+              previewCtx.save();
+              previewCtx.font = 'bold 15px Inter, system-ui, sans-serif';
+              previewCtx.textAlign = 'center';
+              if (isZoomingIn) {
+                previewCtx.fillStyle = 'rgba(255, 80, 80, 0.9)';
+                previewCtx.fillText('✊ ZOOM IN', previewCanvas.width / 2, previewCanvas.height - 14);
+              } else {
+                previewCtx.fillStyle = 'rgba(80, 200, 255, 0.9)';
+                previewCtx.fillText('🖐️ ZOOM OUT', previewCanvas.width / 2, previewCanvas.height - 14);
+              }
+              previewCtx.restore();
+            }
+          } else {
+            handDetected = false;
+            showHandStatus('Không phát hiện bàn tay');
+          }
+        });
+        handsInstance = hands;
+      }
+
+      // Khởi tạo camera webcam
+      const cam = new window.Camera(videoElement, {
+        onFrame: async () => {
+          if (handsInstance) {
+            await handsInstance.send({ image: videoElement });
+          }
+        },
+        width: 640,
+        height: 480
+      });
+      await cam.start();
+      handCameraInstance = cam;
+
+      handTrackingActive = true;
+      controls.enabled = false;
+
+      // Lưu vị trí camera hiện tại làm gốc tham chiếu
+      const sph = new THREE.Spherical().setFromVector3(camera.position);
+      handBaseAzimuth = sph.theta;
+      handBasePolar = sph.phi;
+      handBaseRadius = sph.radius;
+      smoothHandX = 0.5;
+      smoothHandY = 0.5;
+
+      toggleBtn.classList.remove('loading');
+      toggleBtn.classList.add('active');
+      toggleBtn.querySelector('.hand-icon').textContent = '✋';
+      toggleBtn.querySelector('.hand-label').textContent = 'Tắt Camera';
+      showHandStatus('Di chuyển tay để điều khiển');
+      setTimeout(hideHandStatus, 2500);
+
+    } catch (err) {
+      console.error('Lỗi khởi tạo Hand Tracking:', err);
+      toggleBtn.classList.remove('loading');
+      toggleBtn.querySelector('.hand-icon').textContent = '🖐️';
+      toggleBtn.querySelector('.hand-label').textContent = 'Bật Camera';
+      previewContainer.classList.remove('active');
+      alert('Không thể mở camera. Hãy cho phép truy cập webcam và thử lại.');
+    }
+  }
+
+  function stopHandTracking() {
+    if (handCameraInstance) {
+      handCameraInstance.stop();
+      handCameraInstance = null;
+    }
+
+    handTrackingActive = false;
+    handDetected = false;
+    isZoomingIn = false;
+    isZoomingOut = false;
+
+    // Khôi phục OrbitControls (nếu intro đã xong)
+    const elapsed = performance.now() - (introStartTime || 0);
+    if (elapsed > camIntroDuration) {
+      controls.enabled = true;
+    }
+
+    const previewContainer = document.getElementById('hand-preview');
+    const toggleBtn = document.getElementById('hand-toggle');
+    previewContainer.classList.remove('active');
+    toggleBtn.classList.remove('active');
+    toggleBtn.querySelector('.hand-icon').textContent = '🖐️';
+    toggleBtn.querySelector('.hand-label').textContent = 'Bật Camera';
+    hideHandStatus();
+
+    // Dừng webcam stream để tắt đèn camera
+    const videoElement = document.getElementById('hand-video');
+    if (videoElement && videoElement.srcObject) {
+      videoElement.srcObject.getTracks().forEach(track => track.stop());
+      videoElement.srcObject = null;
+    }
+  }
+
+  document.getElementById('hand-toggle').addEventListener('click', () => {
+    if (handTrackingActive) {
+      stopHandTracking();
+    } else {
+      startHandTracking();
+    }
+  });
+
+
   function animate(now) {
     requestAnimationFrame(animate);
     const dt = now - lastTime;
@@ -1327,7 +1584,7 @@ function init3DScene() {
       camera.position.z = 2.0 + (4.8 - 2.0) * p;
       camera.position.y = 0.4 * (1 - p);
       camera.position.x = 0;
-    } else if (!controls.enabled) {
+    } else if (!controls.enabled && !handTrackingActive) {
       // Khi kết thúc intro, trả lại toàn quyền điều khiển OrbitControls cho người dùng
       camera.position.set(0, 0, 4.8);
       controls.target.set(0, 0, 0);
@@ -1395,6 +1652,37 @@ function init3DScene() {
         item.sprite.material.opacity = 0.95 * Math.min(1.0, t * 1.5);
       }
     });
+
+    // === CẬP NHẬT VỊ TRÍ CAMERA TỪ HAND TRACKING ===
+    if (handTrackingActive && handDetected) {
+      // Làm mượt vị trí tay bằng lerp
+      smoothHandX += (currentHandX - smoothHandX) * 0.07;
+      smoothHandY += (currentHandY - smoothHandY) * 0.07;
+
+      // Ánh xạ vị trí tay → góc xoay camera
+      const azimuthRange = Math.PI * 2.0;
+      const targetAzimuth = handBaseAzimuth + (smoothHandX - 0.5) * azimuthRange;
+
+      const polarRange = Math.PI * 0.7;
+      const targetPolar = handBasePolar + (smoothHandY - 0.5) * polarRange;
+      const clampedPolar = Math.max(0.2, Math.min(Math.PI - 0.2, targetPolar));
+
+      const sph = new THREE.Spherical().setFromVector3(camera.position);
+
+      // Lerp góc xoay cho mượt mà
+      sph.theta += (targetAzimuth - sph.theta) * 0.05;
+      sph.phi += (clampedPolar - sph.phi) * 0.05;
+
+      // Xử lý zoom bằng cử chỉ nắm/mở tay
+      if (isZoomingIn) {
+        sph.radius = Math.max(controls.minDistance, sph.radius - 0.05);
+      } else if (isZoomingOut) {
+        sph.radius = Math.min(controls.maxDistance, sph.radius + 0.05);
+      }
+
+      camera.position.setFromSpherical(sph);
+      camera.lookAt(controls.target);
+    }
 
     controls.update();
     renderer.render(scene, camera);
