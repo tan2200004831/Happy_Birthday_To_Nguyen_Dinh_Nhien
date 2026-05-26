@@ -1,7 +1,8 @@
 /* index4.css - grid + fly-in animation */
 :root {
   --bg: #ffdff0;
-  --gap: 12px;
+  --gap: 20px;
+  --tile-radius: 12px;
 }
 
 /* full screen stage */
@@ -11,33 +12,32 @@ body {
   margin: 0;
   font-family: "Segoe UI", Roboto, Arial, sans-serif;
   background: linear-gradient(180deg, #ffeef6 0%, #ffdbe8 100%);
+  -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
 }
 
 .stage {
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 24px;
   box-sizing: border-box;
 }
 
-/* responsive grid that fills width and height nicely */
+/* responsive grid - ảnh to đều, cho phép cuộn */
 .grid {
   width: 100%;
-  max-width: 1200px;
-  height: 150vh; /* grid area height */
+  max-width: 1400px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  grid-auto-rows: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-auto-rows: 200px; /* Mỗi ô vuông 200px - ảnh to đều */
   gap: var(--gap);
-  align-content: start; /* let it grow from top */
   padding: var(--gap);
   box-sizing: border-box;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.5);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
+  overflow: visible; /* cho phép nhìn thấy hiệu ứng hover */
   position: relative;
 }
 
@@ -45,7 +45,7 @@ body {
 .tile {
   position: relative;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: var(--tile-radius);
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.6),
@@ -54,6 +54,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  aspect-ratio: 1 / 1; /* ô vuông đều */
   transform: translateX(-120%); /* start off-screen left */
   opacity: 0;
   transition: transform 700ms cubic-bezier(0.22, 0.9, 0.3, 1),
@@ -67,7 +68,7 @@ body {
   opacity: 1;
 }
 
-/* image styling */
+/* image styling - ảnh rõ nét */
 .tile img {
   width: 100%;
   height: 100%;
@@ -75,24 +76,59 @@ body {
   display: block;
   pointer-events: none;
   user-select: none;
+  image-rendering: -webkit-optimize-contrast; /* sắc nét hơn trên webkit */
+  image-rendering: crisp-edges;
 }
 
-/* nice hover pop (optional) */
-.tile:hover {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-  transition: transform 200ms ease, box-shadow 200ms ease;
+/* nice hover pop */
+.tile.show:hover {
+  transform: translateY(-6px) scale(1.04);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.15);
+  transition: transform 250ms ease, box-shadow 250ms ease;
+  z-index: 10;
 }
 
-/* smaller screens tweaks */
-@media (max-width: 600px) {
+/* ========== TABLET (601px - 900px) ========== */
+@media (max-width: 900px) {
   .grid {
-    height: 75vh;
-    padding: 10px;
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    grid-auto-rows: 170px;
+    gap: 12px;
+    padding: 12px;
+    max-width: 100%;
   }
+}
+
+/* ========== MOBILE (≤ 600px) ========== */
+@media (max-width: 600px) {
+  .stage {
+    padding: 10px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 cột đều trên điện thoại */
+    grid-auto-rows: 45vw; /* Ô to chiếm gần nửa màn hình - rất rõ nét */
+    gap: 8px;
+    padding: 8px;
+    border-radius: 10px;
+  }
+
   .tile {
     border-radius: 8px;
+  }
+
+  .tile img {
+    image-rendering: auto; /* để trình duyệt tối ưu trên mobile */
+  }
+}
+
+/* ========== MOBILE NHỎ (≤ 380px) ========== */
+@media (max-width: 380px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 42vw;
+    gap: 6px;
+    padding: 6px;
   }
 }
 
@@ -103,6 +139,15 @@ body {
 }
 
 .tile.clickable:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
+  transform: scale(1.06);
+  box-shadow: 0 0 20px rgba(255, 105, 180, 0.45);
+}
+
+/* Hiệu ứng giảm motion */
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
 }

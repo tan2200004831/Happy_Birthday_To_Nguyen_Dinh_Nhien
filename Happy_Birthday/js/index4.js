@@ -39,6 +39,17 @@ document.addEventListener("DOMContentLoaded", () => {
     "Happy_Birthday/images/30.jpg",
     "Happy_Birthday/images/31.jpg",
     "Happy_Birthday/images/32.jpg",
+    "Happy_Birthday/images/33.jpg",
+    "Happy_Birthday/images/34.jpg",
+    "Happy_Birthday/images/35.jpg",
+    "Happy_Birthday/images/36.jpg",
+    "Happy_Birthday/images/37.jpg",
+    "Happy_Birthday/images/38.jpg",
+    "Happy_Birthday/images/39.jpg",
+    "Happy_Birthday/images/40.jpg",
+    "Happy_Birthday/images/41.jpg",
+    "Happy_Birthday/images/42.jpg",
+    "Happy_Birthday/images/43.jpg"
   ];
 
   // === MAP ẢNH -> TRANG CHUYỂN ===

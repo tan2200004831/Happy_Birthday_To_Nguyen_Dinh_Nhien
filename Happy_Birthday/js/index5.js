@@ -1067,11 +1067,14 @@ function init3DScene() {
   const scene = new THREE.Scene();
   
   // Camera bắt đầu ở cận cảnh gần Trái Đất để tạo hiệu ứng zoom-out ấn tượng
-  const camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
+  const isMobileView = w < h; // điện thoại đứng (portrait)
+  const baseFov = isMobileView ? 60 : 75; // FOV nhỏ hơn trên mobile để Trái Đất to hơn
+  const camera = new THREE.PerspectiveCamera(baseFov, w / h, 0.1, 1000);
   camera.position.set(0, 0.4, 2.0);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // giới hạn pixel ratio để không quá tải GPU trên màn hình 3x
   renderer.domElement.id = "three-canvas";
   document.body.appendChild(renderer.domElement);
 
@@ -1289,8 +1292,11 @@ function init3DScene() {
   function handleResize() {
     const width = window.innerWidth;
     const height = window.innerHeight;
+    const isPortrait = width < height;
+    camera.fov = isPortrait ? 60 : 75; // Điều chỉnh FOV theo hướng màn hình
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
   }
   window.addEventListener("resize", handleResize);
@@ -1580,13 +1586,17 @@ function init3DScene() {
       const t = elapsed / camIntroDuration;
       const p = easeOutCubic(t);
       
-      // Zoom out từ (0, 0.4, 2.0) ra (0, 0, 4.8)
-      camera.position.z = 2.0 + (4.8 - 2.0) * p;
+      // Zoom out từ (0, 0.4, 2.0) ra vị trí cuối (gần hơn trên mobile)
+      const isMobileNow = window.innerWidth < window.innerHeight;
+      const finalZ = isMobileNow ? 3.8 : 4.8; // Điện thoại: camera gần hơn để Trái Đất to hơn
+      camera.position.z = 2.0 + (finalZ - 2.0) * p;
       camera.position.y = 0.4 * (1 - p);
       camera.position.x = 0;
     } else if (!controls.enabled && !handTrackingActive) {
       // Khi kết thúc intro, trả lại toàn quyền điều khiển OrbitControls cho người dùng
-      camera.position.set(0, 0, 4.8);
+      const isMobileEnd = window.innerWidth < window.innerHeight;
+      const endZ = isMobileEnd ? 3.8 : 4.8;
+      camera.position.set(0, 0, endZ);
       controls.target.set(0, 0, 0);
       controls.enabled = true;
     }

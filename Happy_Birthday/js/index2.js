@@ -1,6 +1,7 @@
 // throttle: số phần tử pháo hoa đang hoạt động (giúp tránh lag)
 let _fwActiveCount = 0;
-const FW_ACTIVE_LIMIT = 200; // tổng hạt đang sống tối đa; hạ nếu vẫn lag
+const _isMobile = window.innerWidth <= 600;
+const FW_ACTIVE_LIMIT = _isMobile ? 80 : 200; // giảm mạnh trên mobile
 
 /* ================== Setup ================== */
 const cake = document.getElementById("cake");
@@ -155,7 +156,7 @@ function spawnBirthdayExplosion(cx, cy, opts = {}) {
   const baseHue = Math.floor(Math.random() * 360);
 
   // fewer main particles => less DOM + GPU work
-  const parts = 8 + Math.floor(Math.random() * 6); // 8-13
+  const parts = _isMobile ? (4 + Math.floor(Math.random() * 4)) : (8 + Math.floor(Math.random() * 6)); // mobile: 4-7, desktop: 8-13
   for (let i = 0; i < parts; i++) {
     const p = document.createElement("div");
     p.className = "firework";
@@ -185,7 +186,7 @@ function spawnBirthdayExplosion(cx, cy, opts = {}) {
   }
 
   // sparks: gentler and fewer
-  const sparks = 6 + Math.floor(Math.random() * 6); // 6-11
+  const sparks = _isMobile ? (3 + Math.floor(Math.random() * 3)) : (6 + Math.floor(Math.random() * 6)); // mobile: 3-5, desktop: 6-11
   for (let i = 0; i < sparks; i++) {
     const s = document.createElement("div");
     s.className = "firework spark";
@@ -209,7 +210,7 @@ function spawnBirthdayExplosion(cx, cy, opts = {}) {
   }
 
   // stars: fewer, smaller travel
-  const stars = 1 + Math.floor(Math.random() * 2);
+  const stars = _isMobile ? 1 : (1 + Math.floor(Math.random() * 2));
   for (let i = 0; i < stars; i++) {
     const st = document.createElement("div");
     st.className = "firework star";
@@ -234,7 +235,7 @@ function spawnBirthdayExplosion(cx, cy, opts = {}) {
   }
 
   // confetti: fewer + smaller offsets
-  const confettiCount = 4 + Math.floor(Math.random() * 5);
+  const confettiCount = _isMobile ? (2 + Math.floor(Math.random() * 3)) : (4 + Math.floor(Math.random() * 5));
   for (let i = 0; i < confettiCount; i++) {
     const c = document.createElement("div");
     c.className = Math.random() > 0.75 ? "confetti-big" : "confetti-mini";
@@ -332,8 +333,8 @@ window.addEventListener("load", () => {
       return;
     }
 
-    // 1) rockets: 2..4 rockets per tick
-    const rockets = 2 + Math.floor(Math.random() * 3);
+    // 1) rockets: fewer on mobile
+    const rockets = _isMobile ? (1 + Math.floor(Math.random() * 2)) : (2 + Math.floor(Math.random() * 3));
     for (let i = 0; i < rockets; i++) {
       const margin = 40;
       const x = margin + Math.random() * (window.innerWidth - margin * 2);
@@ -396,8 +397,9 @@ function launchRocket(startX, opts = {}) {
     rocket.style.left = x + "px";
     rocket.style.top = y + "px";
 
-    // produce a tiny trail (rarely to keep perf)
-    if (frameCount % 3 === 0) {
+    // produce a tiny trail (less on mobile to reduce lag)
+    const trailInterval = _isMobile ? 6 : 3;
+    if (frameCount % trailInterval === 0) {
       // spawn a tiny confetti/trail piece (uses your spawnConfetti which expects page coords)
       if (typeof spawnConfetti === "function") spawnConfetti(x, y + 6, 1);
     }
