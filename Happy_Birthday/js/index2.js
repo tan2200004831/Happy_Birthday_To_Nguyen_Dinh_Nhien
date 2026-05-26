@@ -581,6 +581,6 @@ gift.addEventListener("click", () => {
 
   // Chuyển trang sau khi animation xong
   setTimeout(() => {
-    window.location.href = "index3.html";
+    window.location.href = "Birthday_wishes.html";
   }, 500);
 });

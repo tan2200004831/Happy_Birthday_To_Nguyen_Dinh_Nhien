@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // === MAP ẢNH -> TRANG CHUYỂN ===
   const clickMap = {
-    "Happy_Birthday/images/Qua_cute.jpg": "index5.html",
+    "Happy_Birthday/images/Qua_cute.jpg": "Super_beautiful_baby.html",
   };
 
   // === TẠO DANH SÁCH TILE ===

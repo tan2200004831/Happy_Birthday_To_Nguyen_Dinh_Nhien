@@ -56,7 +56,7 @@ if (card) {
   // document.querySelectorAll(".typewriter").forEach(el => startTypewriterFor(el, 90));
 }
 
-// Chuyển sang trang index4.html
+// Chuyển sang trang Baby_photo.html
 document.querySelector(".special-btn").addEventListener("click", function () {
-  window.location.href = "index4.html";
+  window.location.href = "Baby_photo.html";
 });

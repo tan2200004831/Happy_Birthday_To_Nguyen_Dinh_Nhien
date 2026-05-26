@@ -36,7 +36,7 @@ setInterval(createIcon, 300);
 
 /*
 ================================================================================= 
-Chuyển hướng sang index2.html
+Chuyển hướng sang Birthday_cake.html
 */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
       showNotify("✅ Yeahhh đúng rầu 🥳!", "green");
       // chuyển trang sau 900ms để user thấy thông báo
       setTimeout(() => {
-        window.location.href = "index2.html";
+        window.location.href = "Birthday_cake.html";
       }, 900);
     } else {
       showWrong();
