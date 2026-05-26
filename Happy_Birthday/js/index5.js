@@ -1318,6 +1318,8 @@ function init3DScene() {
 
   // === ĐIỀU KHIỂN BẰNG TAY QUA CAMERA (HAND TRACKING) ===
   let handTrackingActive = false;
+  let activeStream = null;
+  let animationFrameId = null;
   let handCameraInstance = null;
   let handsInstance = null;
   let currentHandX = 0.5;
@@ -1396,23 +1398,25 @@ function init3DScene() {
     if (el) el.classList.remove('visible');
   }
 
-  async function startHandTracking() {
+  async function startHandTracking(deviceId) {
     const toggleBtn = document.getElementById('hand-toggle');
     const previewContainer = document.getElementById('hand-preview');
     const previewCanvas = document.getElementById('hand-canvas');
     const previewCtx = previewCanvas.getContext('2d');
     const videoElement = document.getElementById('hand-video');
 
-    if (!window.Hands || !window.Camera) {
+    if (!window.Hands) {
       alert('Thư viện MediaPipe chưa được tải. Hãy kiểm tra kết nối mạng.');
       return;
     }
 
-    toggleBtn.classList.add('loading');
-    toggleBtn.querySelector('.hand-label').textContent = 'Đang tải...';
-    toggleBtn.querySelector('.hand-icon').textContent = '⏳';
-    previewContainer.classList.add('active');
-    showHandStatus('Đang tải mô hình AI...');
+    if (toggleBtn) {
+      toggleBtn.classList.add('loading');
+      toggleBtn.querySelector('.hand-label').textContent = 'Đang tải...';
+      toggleBtn.querySelector('.hand-icon').textContent = '⏳';
+    }
+    if (previewContainer) previewContainer.classList.add('active');
+    showHandStatus('Đang kết nối camera...');
 
     try {
       // Tạo Hands instance (tái sử dụng nếu đã có)
@@ -1427,6 +1431,7 @@ function init3DScene() {
           minTrackingConfidence: 0.5
         });
         hands.onResults((results) => {
+          if (!previewCanvas || !previewCtx) return;
           previewCtx.save();
           previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
 
@@ -1480,21 +1485,49 @@ function init3DScene() {
         handsInstance = hands;
       }
 
-      // Khởi tạo camera webcam
-      const cam = new window.Camera(videoElement, {
-        onFrame: async () => {
-          if (handsInstance) {
-            await handsInstance.send({ image: videoElement });
-          }
+      // Thiết lập ràng buộc (constraints) webcam
+      const constraints = {
+        video: deviceId ? { 
+          deviceId: { exact: deviceId },
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        } : { 
+          width: { ideal: 640 }, 
+          height: { ideal: 480 } 
         },
-        width: 640,
-        height: 480
-      });
-      await cam.start();
-      handCameraInstance = cam;
+        audio: false
+      };
+
+      // Dừng luồng cũ nếu có
+      if (activeStream) {
+        activeStream.getTracks().forEach(track => track.stop());
+      }
+
+      activeStream = await navigator.mediaDevices.getUserMedia(constraints);
+      videoElement.srcObject = activeStream;
+      await videoElement.play();
 
       handTrackingActive = true;
       controls.enabled = false;
+
+      // Vòng lặp lấy frame tự động
+      let isProcessing = false;
+      async function processFrame() {
+        if (!handTrackingActive) return;
+        if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA && !isProcessing) {
+          isProcessing = true;
+          try {
+            if (handsInstance) {
+              await handsInstance.send({ image: videoElement });
+            }
+          } catch (err) {
+            console.error("Lỗi gửi ảnh sang MediaPipe:", err);
+          }
+          isProcessing = false;
+        }
+        animationFrameId = requestAnimationFrame(processFrame);
+      }
+      processFrame();
 
       // Lưu vị trí camera hiện tại làm gốc tham chiếu
       const sph = new THREE.Spherical().setFromVector3(camera.position);
@@ -1504,33 +1537,38 @@ function init3DScene() {
       smoothHandX = 0.5;
       smoothHandY = 0.5;
 
-      toggleBtn.classList.remove('loading');
-      toggleBtn.classList.add('active');
-      toggleBtn.querySelector('.hand-icon').textContent = '✋';
-      toggleBtn.querySelector('.hand-label').textContent = 'Tắt Camera';
+      if (toggleBtn) {
+        toggleBtn.classList.remove('loading');
+        toggleBtn.classList.add('active');
+        toggleBtn.querySelector('.hand-icon').textContent = '✋';
+        toggleBtn.querySelector('.hand-label').textContent = 'Tắt Camera';
+      }
       showHandStatus('Di chuyển tay để điều khiển');
       setTimeout(hideHandStatus, 2500);
 
     } catch (err) {
       console.error('Lỗi khởi tạo Hand Tracking:', err);
-      toggleBtn.classList.remove('loading');
-      toggleBtn.querySelector('.hand-icon').textContent = '🖐️';
-      toggleBtn.querySelector('.hand-label').textContent = 'Bật Camera';
-      previewContainer.classList.remove('active');
-      alert('Không thể mở camera. Hãy cho phép truy cập webcam và thử lại.');
+      if (toggleBtn) {
+        toggleBtn.classList.remove('loading');
+        toggleBtn.classList.remove('active');
+        toggleBtn.querySelector('.hand-icon').textContent = '🖐️';
+        toggleBtn.querySelector('.hand-label').textContent = 'Bật Camera';
+      }
+      if (previewContainer) previewContainer.classList.remove('active');
+      alert('Không thể mở camera được chọn. Vui lòng kiểm tra quyền truy cập webcam.');
     }
   }
 
   function stopHandTracking() {
-    if (handCameraInstance) {
-      handCameraInstance.stop();
-      handCameraInstance = null;
-    }
-
     handTrackingActive = false;
     handDetected = false;
     isZoomingIn = false;
     isZoomingOut = false;
+
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
 
     // Khôi phục OrbitControls (nếu intro đã xong)
     const elapsed = performance.now() - (introStartTime || 0);
@@ -1540,25 +1578,158 @@ function init3DScene() {
 
     const previewContainer = document.getElementById('hand-preview');
     const toggleBtn = document.getElementById('hand-toggle');
-    previewContainer.classList.remove('active');
-    toggleBtn.classList.remove('active');
-    toggleBtn.querySelector('.hand-icon').textContent = '🖐️';
-    toggleBtn.querySelector('.hand-label').textContent = 'Bật Camera';
+    if (previewContainer) previewContainer.classList.remove('active');
+    if (toggleBtn) {
+      toggleBtn.classList.remove('active');
+      toggleBtn.classList.remove('loading');
+      toggleBtn.querySelector('.hand-icon').textContent = '🖐️';
+      toggleBtn.querySelector('.hand-label').textContent = 'Bật Camera';
+    }
     hideHandStatus();
 
     // Dừng webcam stream để tắt đèn camera
+    if (activeStream) {
+      activeStream.getTracks().forEach(track => track.stop());
+      activeStream = null;
+    }
     const videoElement = document.getElementById('hand-video');
-    if (videoElement && videoElement.srcObject) {
-      videoElement.srcObject.getTracks().forEach(track => track.stop());
+    if (videoElement) {
       videoElement.srcObject = null;
     }
+  }
+
+  const cameraModal = document.getElementById('camera-choice-modal');
+  const cameraModalClose = document.getElementById('camera-modal-close');
+  const qrImage = document.getElementById('qr-image');
+  const qrLoadingText = document.getElementById('qr-loading-text');
+  const phoneCameraList = document.getElementById('phone-camera-list');
+  const pcCameraList = document.getElementById('pc-camera-list');
+
+  async function showCameraChoiceModal() {
+    if (!cameraModal) return;
+    
+    // Clear danh sách cũ
+    if (phoneCameraList) phoneCameraList.innerHTML = '<div style="color: rgba(255,255,255,0.4); font-size: 12px;">Đang quét camera...</div>';
+    if (pcCameraList) pcCameraList.innerHTML = '<div style="color: rgba(255,255,255,0.4); font-size: 12px;">Đang quét camera...</div>';
+    
+    cameraModal.classList.add('active');
+    
+    // Tạo mã QR bằng API
+    const pageUrl = window.location.href;
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pageUrl)}`;
+    
+    if (qrImage) {
+      qrImage.style.display = 'none';
+      if (qrLoadingText) qrLoadingText.style.display = 'block';
+      qrImage.src = qrApiUrl;
+      qrImage.onload = () => {
+        qrImage.style.display = 'block';
+        if (qrLoadingText) qrLoadingText.style.display = 'none';
+      };
+    }
+
+    try {
+      // 1. Kích hoạt quyền truy cập tạm thời để có nhãn tên các camera
+      const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      tempStream.getTracks().forEach(track => track.stop());
+      
+      // 2. Liệt kê các camera
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(d => d.kind === 'videoinput');
+      
+      if (phoneCameraList) phoneCameraList.innerHTML = '';
+      if (pcCameraList) pcCameraList.innerHTML = '';
+      
+      let phoneCount = 0;
+      let pcCount = 0;
+
+      videoDevices.forEach(device => {
+        const label = device.label || `Camera (${device.deviceId.substring(0, 5)}...)`;
+        const lowerLabel = label.toLowerCase();
+        
+        // Phân loại: A51, Samsung, Phone, Mobile, DroidCam, Iriun, Virtual, Link to Windows...
+        const isPhone = lowerLabel.includes('a51') || 
+                        lowerLabel.includes('samsung') || 
+                        lowerLabel.includes('phone') || 
+                        lowerLabel.includes('mobile') || 
+                        lowerLabel.includes('droidcam') || 
+                        lowerLabel.includes('iriun') || 
+                        lowerLabel.includes('epoccam') || 
+                        lowerLabel.includes('link to windows') || 
+                        lowerLabel.includes('virtual');
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-device-select';
+        
+        const titleText = isPhone ? "Kết nối camera điện thoại" : "Bật camera máy tính";
+        btn.innerHTML = `
+          <div class="btn-device-title">${titleText}</div>
+          <div class="btn-device-subtitle">${label}</div>
+        `;
+        
+        btn.title = label;
+        btn.addEventListener('click', () => {
+          hideCameraChoiceModal();
+          startHandTracking(device.deviceId);
+        });
+
+        if (isPhone) {
+          if (phoneCameraList) phoneCameraList.appendChild(btn);
+          phoneCount++;
+        } else {
+          if (pcCameraList) pcCameraList.appendChild(btn);
+          pcCount++;
+        }
+      });
+
+      // Nếu không tìm thấy camera điện thoại
+      if (phoneCount === 0 && phoneCameraList) {
+        phoneCameraList.innerHTML = '<div style="color: rgba(255,255,255,0.45); font-size: 12px; font-style: italic; text-align: center; padding: 10px 0;">Không tìm thấy camera điện thoại kết nối.</div>';
+      }
+
+      // Nếu không tìm thấy camera máy tính
+      if (pcCount === 0 && pcCameraList) {
+        pcCameraList.innerHTML = '<div style="color: rgba(255,255,255,0.45); font-size: 12px; font-style: italic; text-align: center; padding: 10px 0;">Không tìm thấy webcam máy tính.</div>';
+      }
+
+    } catch (err) {
+      console.error('Lỗi cấp quyền hoặc quét thiết bị camera:', err);
+      const errMsg = '<div style="color: #ff5252; font-size: 12px; line-height: 1.4; padding: 10px 0;">Không thể quét thiết bị camera. Hãy cho phép trình duyệt truy cập camera.</div>';
+      if (phoneCameraList) phoneCameraList.innerHTML = errMsg;
+      if (pcCameraList) pcCameraList.innerHTML = errMsg;
+    }
+  }
+
+  function hideCameraChoiceModal() {
+    if (cameraModal) {
+      cameraModal.classList.remove('active');
+    }
+  }
+
+  if (cameraModalClose) {
+    cameraModalClose.addEventListener('click', hideCameraChoiceModal);
+  }
+
+  if (cameraModal) {
+    cameraModal.addEventListener('click', (e) => {
+      if (e.target === cameraModal) {
+        hideCameraChoiceModal();
+      }
+    });
   }
 
   document.getElementById('hand-toggle').addEventListener('click', () => {
     if (handTrackingActive) {
       stopHandTracking();
     } else {
-      startHandTracking();
+      // Kiểm tra nếu là thiết bị di động
+      const isMobile = window.innerWidth <= 600 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        startHandTracking();
+      } else {
+        showCameraChoiceModal();
+      }
     }
   });
 

@@ -39,6 +39,42 @@
         <span class="hand-icon">🖐️</span>
         <span class="hand-label">Bật Camera</span>
     </button>
+    <!-- Camera Choice Modal -->
+    <div id="camera-choice-modal" class="camera-modal">
+        <div class="camera-modal-content">
+            <button id="camera-modal-close" class="camera-modal-close-btn" type="button">&times;</button>
+            <h2 class="camera-modal-title">Chọn Nguồn Camera 🖐️</h2>
+            <div class="camera-options">
+                <!-- Option 1: Phone -->
+                <div class="camera-option-card" id="option-phone">
+                    <div class="option-icon">📱</div>
+                    <h3>Camera Điện Thoại</h3>
+                    <p class="card-desc">Chọn camera điện thoại kết nối với máy tính này (như A51 của Tân, ...):</p>
+                    <div id="phone-camera-list" class="device-list-container"></div>
+                </div>
+                
+                <!-- Divider -->
+                <div class="options-divider"></div>
+                
+                <!-- Option 2: PC -->
+                <div class="camera-option-card" id="option-pc">
+                    <div class="option-icon">💻</div>
+                    <h3>Camera Của Máy Tính</h3>
+                    <p class="card-desc">Chọn webcam tích hợp</p>
+                    <div id="pc-camera-list" class="device-list-container"></div>
+                    
+                    <div class="pc-tip-section">
+                        <span class="pc-tip-title">Mẹo nhỏ khi dùng cử chỉ điều khiển:</span>
+                        <div class="pc-tip-box">
+                            <div class="tip-item">✨ Đứng/ngồi cách camera khoảng 0.5m - 1.5m</div>
+                            <div class="tip-item">💡 Đảm bảo góc quay đủ ánh sáng rõ mặt</div>
+                            <div class="tip-item">✊ Nắm tay để phóng to, xòe tay để thu nhỏ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="./Happy_Birthday/js/index5.js"></script>
 </body>
