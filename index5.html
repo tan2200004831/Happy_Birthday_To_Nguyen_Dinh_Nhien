@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="author" content="Lê Nhật Tân">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Bình nguyên vô tận</title>
+    <link rel="stylesheet" href="./Happy_Birthday/css/index5.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.161/build/three.module.js",
+                "jsm/": "https://cdn.jsdelivr.net/npm/three@0.161/examples/jsm/"
+            }
+        }
+    </script>
+    <!-- MediaPipe Hands cho điều khiển bằng cử chỉ tay -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <canvas id="stars"></canvas>
+
+    <div class="earth-wrap" aria-hidden="true">
+        <canvas id="earth" width="800" height="800"></canvas>
+        <canvas id="earth-icons" aria-hidden="true"></canvas> <!-- overlay -->
+    </div>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <!-- Hand Tracking UI -->
+    <video id="hand-video" playsinline style="display:none;"></video>
+    <div id="hand-preview">
+        <canvas id="hand-canvas" width="320" height="240"></canvas>
+        <div class="hand-status" id="hand-status">Đang tải mô hình AI...</div>
+    </div>
+    <button id="hand-toggle" type="button">
+        <span class="hand-icon">🖐️</span>
+        <span class="hand-label">Bật Camera</span>
+    </button>
+
+    <script type="module" src="./Happy_Birthday/js/index5.js"></script>
+</body>
+
+</html>
