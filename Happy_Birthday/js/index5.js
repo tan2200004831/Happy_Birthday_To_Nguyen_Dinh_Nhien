@@ -1223,6 +1223,77 @@ function init3DScene() {
   const stars = getStarfield({ numStars: 2200 });
   scene.add(stars);
 
+  // === ẢNH HIỆN TOÀN MÀN HÌNH KHI GIƠ NGÓN GIỮA 🖕 ===
+  const middleFingerImages = [
+    "./Happy_Birthday/images/44.jpg",
+    "./Happy_Birthday/images/45.jpg",
+    "./Happy_Birthday/images/46.jpg",
+    "./Happy_Birthday/images/47.jpg",
+    "./Happy_Birthday/images/48.jpg",
+    "./Happy_Birthday/images/49.jpg",
+    "./Happy_Birthday/images/50.jpg",
+    "./Happy_Birthday/images/51.jpg",
+    "./Happy_Birthday/images/52.jpg",
+    "./Happy_Birthday/images/53.jpg",
+    "./Happy_Birthday/images/54.jpg"
+  ];
+  // Tải trước ảnh vào cache trình duyệt để hiện nhanh
+  middleFingerImages.forEach(src => {
+    const img = new Image();
+    img.src = src;
+  });
+  let lastShotTime = 0;
+  const SHOT_COOLDOWN = 3000; // 3 giây hồi chiêu
+
+  function spawnRandomShot(now) {
+    // Chọn ngẫu nhiên 1 ảnh
+    const idx = Math.floor(Math.random() * middleFingerImages.length);
+    const imageSrc = middleFingerImages[idx];
+
+    // Tạo overlay che toàn màn hình
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0.6);
+      opacity: 1;
+      transition: opacity 1.8s ease-out;
+    `;
+
+    const img = document.createElement('img');
+    img.src = imageSrc;
+    img.style.cssText = `
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 0 60px rgba(255, 255, 255, 0.3);
+    `;
+
+    overlay.appendChild(img);
+    document.body.appendChild(overlay);
+
+    // Hiện ảnh 1 giây rồi bắt đầu mờ dần
+    setTimeout(() => {
+      overlay.style.opacity = '0';
+    }, 1000);
+
+    // Xóa overlay khỏi DOM sau khi mờ hoàn toàn
+    setTimeout(() => {
+      overlay.remove();
+    }, 2800);
+
+    lastShotTime = now;
+  }
+
   const iconsGroup = new THREE.Group();
   scene.add(iconsGroup);
 
@@ -1360,6 +1431,22 @@ function init3DScene() {
     return curledCount / 5;
   }
 
+  function detectMiddleFinger(landmarks) {
+    // Ngón giữa duỗi thẳng: đầu ngón (12) cao hơn đốt PIP (10)
+    const middleExtended = landmarks[12].y < landmarks[10].y;
+
+    // Ngón trỏ gập: đầu ngón (8) thấp hơn đốt PIP (6)
+    const indexCurled = landmarks[8].y > landmarks[6].y;
+
+    // Ngón áp út gập: đầu ngón (16) thấp hơn đốt PIP (14)
+    const ringCurled = landmarks[16].y > landmarks[14].y;
+
+    // Ngón út gập: đầu ngón (20) thấp hơn đốt PIP (18)
+    const pinkyCurled = landmarks[20].y > landmarks[18].y;
+
+    return middleExtended && indexCurled && ringCurled && pinkyCurled;
+  }
+
   function drawHandOnCanvas(ctx, landmarks, w, h) {
     ctx.save();
     ctx.strokeStyle = 'rgba(0, 255, 136, 0.6)';
@@ -1462,6 +1549,12 @@ function init3DScene() {
             const fistScore = detectFistScore(landmarks);
             isZoomingIn = fistScore > 0.75;
             isZoomingOut = fistScore < 0.2;
+
+            // Phát hiện cử chỉ ngón giữa 🖕
+            const isMiddleFinger = detectMiddleFinger(landmarks);
+            if (isMiddleFinger && (performance.now() - lastShotTime > SHOT_COOLDOWN)) {
+              spawnRandomShot(performance.now());
+            }
 
             // Hiển thị trạng thái zoom trên canvas
             if (isZoomingIn || isZoomingOut) {
@@ -1833,6 +1926,7 @@ function init3DScene() {
         item.sprite.material.opacity = 0.95 * Math.min(1.0, t * 1.5);
       }
     });
+
 
     // === CẬP NHẬT VỊ TRÍ CAMERA TỪ HAND TRACKING ===
     if (handTrackingActive && handDetected) {
