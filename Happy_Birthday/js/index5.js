@@ -1245,10 +1245,24 @@ function init3DScene() {
   let lastShotTime = 0;
   const SHOT_COOLDOWN = 3000; // 3 giây hồi chiêu
 
+  // Shuffle bag: xáo trộn danh sách, bốc từng ảnh, hết mới xáo lại
+  let shuffledBag = [];
+  function shuffleArray(arr) {
+    const copy = arr.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
   function spawnRandomShot(now) {
-    // Chọn ngẫu nhiên 1 ảnh
-    const idx = Math.floor(Math.random() * middleFingerImages.length);
-    const imageSrc = middleFingerImages[idx];
+    // Nếu túi rỗng → xáo trộn lại toàn bộ danh sách
+    if (shuffledBag.length === 0) {
+      shuffledBag = shuffleArray(middleFingerImages);
+    }
+    // Bốc 1 ảnh ra khỏi túi (không lặp cho đến khi hết)
+    const imageSrc = shuffledBag.pop();
 
     // Tạo overlay che toàn màn hình
     const overlay = document.createElement('div');
